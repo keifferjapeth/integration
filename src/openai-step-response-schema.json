@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/openai-step-response.schema.json",
+  "title": "OpenAIStepResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "confidence",
+    "reply_text",
+    "requires_handoff",
+    "crm_action",
+    "crm_payload",
+    "reason"
+  ],
+  "properties": {
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reply_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "requires_handoff": {
+      "type": "boolean"
+    },
+    "crm_action": {
+      "type": "string",
+      "enum": [
+        "none",
+        "create_lead",
+        "update_contact",
+        "create_note",
+        "schedule_follow_up"
+      ]
+    },
+    "crm_payload": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "crm_action": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "crm_payload": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "crm_payload": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "crm_payload"
+        ]
+      }
+    }
+  ]
+}
