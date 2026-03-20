@@ -1,0 +1,653 @@
+Leads API Documentation
+Rendered from docs/ · Updated 2026-03-18 23:31:26
+
+Leads API Documentation
+Base URL: https://{your-domain}/backend/
+
+Authentication
+All endpoints require a Bearer token in the Authorization header.
+
+Authorization: Bearer {your_token}
+Tokens are issued by the system administrator. To obtain a token:
+
+Contact your system administrator to create an API user account
+Call the login endpoint to receive your token:
+POST /api/login
+
+{
+  "email": "your-api-user@example.com",
+  "password": "your-password"
+}
+Response:
+
+{
+  "token": "1|abc123xyz...",
+  "token_type": "Bearer"
+}
+Use the returned token value as your Bearer token in all subsequent requests.
+
+Token expiry: API tokens expire daily at 12:00 AM (midnight) server time. You must log in again to get a fresh token after midnight.
+
+Every request to the endpoints listed in this documentation must include the header:
+
+Authorization: Bearer {your_token}
+Requests without a valid token will receive a 401 Unauthorized response.
+
+Table of Contents
+Lead Object Schema
+List Leads (Index)
+Create a Lead (Push)
+Get Lead Info (Pull)
+Update a Lead
+Update Specific Columns (Lightweight)
+Lead Notes
+Lead Lookup Endpoints (Ajax)
+Import Lead from Webhook
+1. Lead Object Schema
+The following fields are available on a lead record. All fields are optional unless noted.
+
+Field	Type	Description
+uuid	string	Unique identifier (read-only, auto-generated)
+first_name	string	First name
+last_name	string	Last name
+name	string	Full name (auto-composed from first + last)
+email	string	Email address
+mobile	string	Mobile number (auto-formatted to E.164 e.g. +971501234567)
+phone	string	Landline / secondary phone
+whatsapp	string	WhatsApp number
+additional_mobile	string	Additional mobile
+additional_email	string	Additional email
+company	string	Company name
+gender	string	Male, Female, Other
+date_of_birth	date	Date of birth (YYYY-MM-DD)
+passport_number	string	Passport number
+passport	string	Passport file/reference value
+license_number	string	License number
+passport_expiry	date	Passport expiry (YYYY-MM-DD)
+finance	string	Cash, Mortgage, Mortgage Approved
+lead_type	string	Type of lead (e.g. Listing, Project)
+contact_method	string	Call, Email, WhatsApp
+priority	string	hot, warm, cold
+lead_score	integer	Numeric score 0–100 (from external CRM)
+score_meta	object	JSON score metadata payload
+social_media_meta	object	JSON social metadata payload
+note	string	General note attached at creation
+status_note	string	Note attached to current status
+archived_reason	string	Archive reason text
+source_id	integer	Lead source ID
+medium_id	integer	Lead medium ID
+status_id	integer	Lead status ID (defaults to "New")
+user_id	integer	Assigned broker/agent user ID
+marketed_by_id	integer	User who marketed the lead
+referred_by_id	integer	User who referred the lead
+country_id	integer	Country ID
+nationality_id	integer	Nationality country ID
+state_id	integer	State/emirate ID
+city_id	integer	City ID
+offering_type_id	integer	Offering type ID
+unsuccessful_reason_id	integer	Unsuccessful reason ID
+archive_reason_id	integer	Archive reason ID
+utm_source	string	UTM source
+utm_medium	string	UTM medium
+utm_campaign	string	UTM campaign
+utm_term	string	UTM term
+utm_content	string	UTM content
+landing_page_url	string	Landing page URL
+referrer_url	string	Referrer URL
+gclid	string	Google Click ID
+fbclid	string	Facebook Click ID
+is_archived	boolean	Whether the lead is archived
+is_pool	boolean	Whether the lead is in the pool (unassigned queue)
+active	boolean	Whether the lead is active
+meta	object	Free-form JSON metadata
+types	array	Type IDs to attach to lead (types relation)
+languages	array	Language IDs for lead (languages relation)
+listing_id	integer	Listing ID to generate lead preference from listing
+minimum_budget	integer	Budget floor (used when creating/updating preference workflows)
+maximum_budget	integer	Budget ceiling (used when creating/updating preference workflows)
+created_at	datetime	ISO 8601 timestamp
+updated_at	datetime	ISO 8601 timestamp
+2. List Leads (Index)
+Retrieve a paginated list of leads with optional filtering, searching, and sorting.
+
+GET /api/leads
+
+Requires Leads List permission. Results are scoped by the authenticated user's hierarchy — Super Admin and users with Leads View All see all leads, other users see only their own leads and their team's leads (plus pool leads).
+
+Query Parameters
+Parameter	Type	Default	Description
+page	integer	1	Page number
+itemsPerPage	integer	10	Results per page
+sortBy	string	updated_at	Column to sort by (e.g. created_at, name, lead_score)
+orderBy	string	desc	Sort direction: asc or desc
+searchTerm	string	—	Free-text search across name, mobile, email, source name, assigned user name
+filters	array	[]	Array of filter objects (see below)
+with	array	[]	Relations to eager-load (e.g. ["user", "status", "source", "medium", "country", "preferences"])
+Search Term
+The searchTerm parameter performs a case-insensitive (ILIKE) search across these fields:
+
+name — Lead's full name
+mobile — Mobile number
+email — Email address
+source_id — Matches source name via relation
+user_id — Matches assigned user name via relation
+unsuccessful_reason_id — Matches reason name via relation
+GET /api/leads?searchTerm=john&page=1&itemsPerPage=20
+Filters
+Filters are passed as an array of objects in the filters parameter. Each filter object has:
+
+Key	Type	Description
+field_name	string	The field to filter on
+selected_operator	string	The comparison operator
+search_value	mixed	The value to compare against
+Available Operators
+Operator	Description	Example Value
+$eq	Equals	"hot"
+$neq	Not equals	"cold"
+$lt	Less than	50
+$lte	Less than or equal	50
+$gt	Greater than	80
+$gte	Greater than or equal	80
+$in	In list	[1, 2, 3] or "1,2,3"
+$notIn	Not in list	[4, 5]
+$contains	Contains substring (case-insensitive)	"marina"
+$notContains	Does not contain substring	"test"
+$startsWith	Starts with (case-insensitive)	"John"
+$endsWith	Ends with (case-insensitive)	"@gmail.com"
+$null	Is null	— (no value needed)
+$notNull	Is not null	— (no value needed)
+$between	Between two values	["2026-01-01", "2026-03-01"]
+$eqDate	Equals date	"2026-03-01"
+$neqDate	Not equals date	"2026-03-01"
+Filterable Fields
+Any column on the leads table can be filtered. Common fields:
+
+Field Name	Type	Description
+status_id	integer	Lead status ID
+source_id	integer	Lead source ID
+medium_id	integer	Lead medium ID
+user_id	integer	Assigned user ID
+priority	string	hot, warm, cold
+lead_score	integer	Numeric score 0–100
+is_archived	boolean	Archived flag
+is_pool	boolean	Pool flag
+active	boolean	Active flag
+country_id	integer	Country ID
+state_id	integer	State/emirate ID
+city_id	integer	City ID
+created_at	date	Created date
+updated_at	date	Last updated date
+finance	string	Cash, Mortgage, Mortgage Approved
+contact_method	string	Call, Email, WhatsApp
+offering_type_id	integer	Offering type ID
+unsuccessful_reason_id	integer	Unsuccessful reason ID
+Relation Filters
+Field Name	Filters By	Description
+user	uuid	Assigned user UUID
+country	id	Country ID
+state	id	State ID
+city	id	City ID
+Special Intent Filters
+field_name	search_value	Description
+intent	active	Active leads (assigned and not in pool)
+intent	pool	Pool leads (unassigned queue)
+intent	unassigned	Unassigned leads not in pool
+Preference Filters
+field_name	search_value	Description
+project_id	integer or array	Leads with preferences linked to specific project(s)
+listing_id	integer or array	Leads with preferences linked to specific listing(s)
+Example Request
+GET /api/leads?page=1&itemsPerPage=20&sortBy=created_at&orderBy=desc&searchTerm=john&with[]=user&with[]=status&with[]=source&filters[0][field_name]=priority&filters[0][selected_operator]=$eq&filters[0][search_value]=hot&filters[1][field_name]=status_id&filters[1][selected_operator]=$in&filters[1][search_value]=1,2,3
+Response 200 OK
+{
+  "status": 200,
+  "title": "Success",
+  "data": [
+    {
+      "id": 1042,
+      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+      "first_name": "John",
+      "last_name": "Smith",
+      "name": "John Smith",
+      "email": "john.smith@example.com",
+      "mobile": "+971501234567",
+      "priority": "hot",
+      "lead_score": 85,
+      "is_archived": false,
+      "is_pool": false,
+      "active": true,
+      "status": { "id": 1, "name": "New" },
+      "source": { "id": 3, "name": "Website" },
+      "user": { "id": 12, "name": "Sarah Johnson" },
+      "created_at": "2026-03-04T10:00:00+04:00",
+      "updated_at": "2026-03-06T14:30:00+04:00"
+    }
+  ],
+  "message": "Retrieved Successfully",
+  "page": 1,
+  "itemsPerPage": 20,
+  "totalRecords": 156
+}
+Visibility Rules
+Permission	Behavior
+Leads View All or Super Admin	Sees all leads
+Leads List only	Sees own + team's leads + pool leads
+Leads View Hidden Status denied	Leads with hidden statuses are excluded
+Leads View Archived Leads denied	Archived leads are excluded (unless browsing pool)
+3. Create a Lead (Push)
+Push a new lead into the system.
+
+POST /api/leads
+
+Request Body
+{
+  "first_name": "John",
+  "last_name": "Smith",
+  "email": "john.smith@example.com",
+  "mobile": "+971501234567",
+  "whatsapp": "+971501234567",
+  "source_id": 3,
+  "medium_id": 5,
+  "status_id": 1,
+  "user_id": 12,
+  "priority": "hot",
+  "lead_score": 85,
+  "note": "Contacted via website form",
+  "lead_type": "Listing",
+  "contact_method": "WhatsApp",
+  "finance": "Cash",
+  "country_id": 1,
+  "utm_source": "google",
+  "utm_medium": "cpc",
+  "utm_campaign": "dubai-apartments"
+}
+Additional Supported Fields (StoreLeadRequest)
+Field	Type	Notes
+types	array	Attached to lead via types()->attach(...)
+languages	array	Synced without detaching existing records
+listing_id	integer	If provided, lead preference is auto-created from listing
+minimum_budget	integer	Accepted by request validation
+maximum_budget	integer	Accepted by request validation
+passport	string	Accepted by request validation
+license_number	string	Accepted by request validation
+score_meta	array	Accepted by request validation
+social_media_meta	array	Accepted by request validation
+unsuccessful_reason_id	integer	Accepted by request validation
+archive_reason_id	integer	Accepted by request validation
+Response 201 Created
+{
+  "success": true,
+  "message": "Lead created successfully",
+  "data": {
+    "id": 1042,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "first_name": "John",
+    "last_name": "Smith",
+    "name": "John Smith",
+    "email": "john.smith@example.com",
+    "mobile": "+971501234567",
+    "priority": "hot",
+    "lead_score": 85,
+    "status": { "id": 1, "name": "New" },
+    "source": { "id": 3, "name": "Website" },
+    "medium": { "id": 5, "name": "WhatsApp" },
+    "created_at": "2026-03-04T10:00:00+04:00"
+  }
+}
+4. Get Lead Info (Pull)
+Retrieve current lead information including deal stage, assigned agent, and activity.
+
+GET /api/leads/{uuid}
+
+Use the lead's uuid as the identifier.
+
+Response 200 OK
+{
+  "success": true,
+  "data": {
+    "id": 1042,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "first_name": "John",
+    "last_name": "Smith",
+    "name": "John Smith",
+    "email": "john.smith@example.com",
+    "mobile": "+971501234567",
+    "priority": "hot",
+    "lead_score": 85,
+    "note": "Contacted via website form",
+    "status": {
+      "id": 4,
+      "name": "In Progress",
+      "display_label": "In Progress"
+    },
+    "source": { "id": 3, "name": "Website" },
+    "medium": { "id": 5, "name": "WhatsApp" },
+    "user": {
+      "id": 12,
+      "name": "Sarah Johnson",
+      "email": "sarah@agency.com"
+    },
+    "country": { "id": 1, "name": "United Arab Emirates" },
+    "city": { "id": 7, "name": "Dubai" },
+    "is_archived": false,
+    "is_pool": false,
+    "active": true,
+    "created_at": "2026-03-04T10:00:00+04:00",
+    "updated_at": "2026-03-06T14:30:00+04:00"
+  }
+}
+5. Update a Lead
+Update lead information — use this to push back lead_score, updated status, or any other field.
+
+PUT /api/leads/{uuid}
+
+The uuid field must also be included in the request body.
+
+Request Body
+Send only the fields you want to update:
+
+{
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "lead_score": 92,
+  "status_id": 6,
+  "priority": "hot",
+  "is_archived": false,
+  "is_pool": false
+}
+Update Behavior Notes (LeadApiController@update)
+Behavior	Details
+uuid in body	Required (uuid must exist in leads table)
+Masked mobile	If mobile is "****", it is ignored and not updated
+Types sync	types are synced using sync($types); omitting types clears existing type links
+Languages sync	languages are synced only when provided
+Status note	If status_note is provided, a note record is created and attached to the lead
+Response 200 OK
+{
+  "success": true,
+  "message": "Lead updated successfully",
+  "data": { ...updated lead object... }
+}
+6. Update Specific Columns (Lightweight)
+For lightweight status/flag updates without triggering full lead processing.
+
+POST /api/leads/update-columns/{uuid}
+
+All fields must be nested under a data key:
+
+{
+  "data": {
+    "status_id": 6,
+    "status_note": "Client not responding",
+    "is_archived": true,
+    "reason_id": 3
+  }
+}
+Field inside data	Type	Description
+active	boolean	Mark lead as active/inactive
+display_order	integer	Display ordering
+is_archived	boolean	Archive the lead
+status_id	integer	New status ID
+status_note	string	Note attached to the status change (also creates a note entry)
+archived_reason	string	Free-text archive reason
+reason_id	integer	Reason ID (used to populate archived_reason and status_note if is_archived is set)
+unsuccessful_reason_id	integer	Unsuccessful reason ID
+is_pool	boolean	Move lead to pool
+lead_score	integer	Update lead score
+transfer_to_pool	boolean	Special flag — sets user_id = null and is_pool = true, and logs a note
+Note: lead_score and other lead profile fields are not allowed here. Use PUT /api/leads/{uuid} for those.
+
+Response 200 OK
+{
+  "success": true,
+  "message": "Lead Updated Successfully"
+}
+No lead data is returned. Fetch the lead separately if needed.
+
+7. Lead Notes
+Notes are the standard way to attach broker comments and observations to a lead. Every comment, update, or follow-up note from your side should be posted here — they appear in the lead's timeline and are visible to all brokers.
+
+Add a Note
+POST /api/create-lead-note
+
+{
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "note": "Client viewed Marina apartment, interested in floor 20+. Callback scheduled for Friday.",
+  "attachment": null,
+  "mentioned_users": ["user-uuid-1", "user-uuid-2"]
+}
+Field	Type	Required	Description
+uuid	string	Yes	The lead's UUID
+note	string	Yes	The comment or observation text
+attachment	string	No	Attachment (string/URL)
+mentioned_users	array	No	Array of user UUIDs to mention
+Get Notes
+GET /api/get-lead-notes?uuid={uuid}
+
+{
+  "success": true,
+  "data": [
+    {
+      "id": 55,
+      "note": "Client viewed Marina apartment, interested in floor 20+. Callback scheduled for Friday.",
+      "created_by": { "id": 12, "name": "Sarah Johnson" },
+      "created_at": "2026-03-06T14:30:00+04:00"
+    }
+  ]
+}
+8. Lead Lookup Endpoints (Ajax)
+Use these endpoints to fetch IDs/options for lead payload fields such as languages, status_id, source_id, medium_id, and types.
+
+8.1 Languages
+GET /api/ajax/languages
+
+Query params:
+
+searchTerm (optional)
+8.2 Statuses (Lead)
+GET /api/ajax/get-statuses?model=App\\Models\\Lead
+
+Query params:
+
+model (recommended): set to App\\Models\\Lead
+searchTerm (optional)
+8.3 Sources (Lead)
+GET /api/ajax/get-sources?model=App\\Models\\Lead
+
+Query params:
+
+model (recommended): set to App\\Models\\Lead
+searchTerm (optional)
+8.4 Mediums (Lead)
+GET /api/ajax/get-mediums?model=App\\Models\\Lead
+
+Query params:
+
+model (recommended): set to App\\Models\\Lead
+searchTerm (optional)
+8.5 Types (Lead)
+GET /api/ajax/get-types?model=App\\Models\\Lead
+
+Query params:
+
+model (recommended): set to App\\Models\\Lead
+searchTerm (optional)
+Common Response Shape
+Most lookup endpoints return an array similar to:
+
+[
+  {
+    "id": 3,
+    "name": "Website",
+    "model": "App\\Models\\Lead",
+    "display_order": 1,
+    "active": true
+  }
+]
+Authentication Note
+get-sources, get-mediums, and languages require auth token.
+get-statuses and get-types are available without auth in current routing.
+9. Import Lead from Webhook
+Import a lead from an external webhook source (e.g. landing pages, ad platforms, third-party forms). This endpoint does not require Bearer token authentication — it uses an API key header instead.
+
+POST /api/webhook/lead-import-webhook
+
+Authentication
+This endpoint uses x-api-key header authentication instead of Bearer token:
+
+x-api-key: {your_external_lead_import_api_key}
+The API key is configured via the EXTERNAL_LEAD_IMPORT_API_KEY environment variable. Contact your system administrator to obtain it.
+
+Request Body
+The endpoint accepts flexible field names and automatically normalizes them. You can send data as a flat JSON object or as a raw JSON string inside a Raw key.
+
+Standard Format
+{
+  "name": "John Smith",
+  "email": "john@example.com",
+  "phone": "+971501234567",
+  "budget": "500000-1000000",
+  "message": "Interested in 2BR apartment in Marina",
+  "source": "Google Ads",
+  "campaign": "dubai-apartments-q1",
+  "form_name": "Marina Landing Page",
+  "user_id": 12,
+  "project_id": 5,
+  "location": "Dubai Marina",
+  "purpose": "Buy",
+  "bedrooms": "2",
+  "utm_source": "google",
+  "utm_medium": "cpc",
+  "utm_campaign": "dubai-apartments-q1",
+  "utm_term": "dubai apartment",
+  "utm_content": "hero-banner",
+  "gclid": "abc123",
+  "fbclid": "xyz789",
+  "referrer_url": "https://google.com",
+  "landing_page_url": "https://yoursite.com/marina",
+  "lead_score": 85,
+  "qualification_score": 85,
+  "score_meta": {
+    "description": "High intent buyer with mortgage pre-approval"
+  },
+  "social_media_meta": {
+    "platform": "instagram",
+    "profile_url": "https://instagram.com/johnsmith"
+  },
+  "medium": "WhatsApp",
+  "formCountryCode": "AE"
+}
+Raw Format (wrapped in Raw key)
+{
+  "Raw": "{\"Name\":\"John Smith\",\"Email\":\"john@example.com\",\"Phone\":\"+971501234567\",\"Budget\":\"500000\"}"
+}
+Field Aliases
+The endpoint normalizes common field name variations:
+
+Canonical Field	Accepted Aliases
+name	Name, name, full_name, fullname, first_name, firstname
+email	Email, email, email_address
+phone	Phone, phone, mobile, phone_number, contact_number, Mobile, MobileNumber
+budget	Budget, budget, price_range, investment
+message	Message, message, comments, notes, form_name, Form_Name
+source	Source, source, utm_source
+campaign	Campaign, campaign, utm_campaign
+form_name	Form_Name, form_name, form, FormName
+user_id	user_id, assigned_agent_id, agent_id, userId
+Preference Fields (Auto-Created)
+The following fields are automatically extracted from the webhook payload and saved as lead preferences:
+
+Field	Aliases	Description
+Budget	budget, price, preferred_budget, asking_price, price_range, max_price, min_price, amount	Budget range (e.g. "500000-1000000") or single value
+Area	area, size, sqft, sq_ft, square_feet, builtup_area, area_range	Area range or single value
+Purpose	purpose, intent, looking_for, intention	Normalized to Rent or Sale
+Bedrooms	bedrooms, beds, no_of_beds, bed_count, bedroom_count	Bedroom count (matched to bed IDs)
+Location	location, locations, city, locality, preferred_location, areas	Location name(s) matched to system locations
+Note	preferences_note, preference_note, requirements, requirement	Preference-specific notes
+Project	project_id, project_uuid	Links preference to a project (auto-fills location, category, developer)
+UTM & Tracking Fields
+Field	Description
+utm_source	UTM source parameter
+utm_medium	UTM medium parameter
+utm_campaign	UTM campaign parameter
+utm_term	UTM search term
+utm_content	UTM content variant
+gclid	Google Click ID
+fbclid	Facebook Click ID
+referrer_url	HTTP referrer URL
+landing_page_url	Landing page URL
+Scoring Fields
+Field	Description
+lead_score or qualification_score	Integer 0–100 qualification score
+score_meta	JSON object with score details (or qualification_summary/score_description as string)
+social_media_meta	JSON object with social media profile data
+Language Resolution
+The endpoint resolves the lead's language from these fields:
+
+Field	Description
+formCountryCode	Country code (e.g. AE, SA) — mapped to language
+county_code	Alternative country code field
+Lag	Direct language code
+Duplicate Handling
+If a lead with the same mobile number and lead type exists within a configured timeframe, the system:
+
+Creates a new note on the existing lead with the webhook data
+Does not create a duplicate lead
+Returns the existing lead
+Processing Flow
+Validates x-api-key header
+Stores raw webhook payload for audit trail (lead_webhook_dumps table)
+Forwards raw payload to LVP asynchronously
+Normalizes field names and extracts lead data
+Checks for duplicate leads (same mobile + lead type within timeframe)
+Creates lead (or updates existing) with status "New"
+Creates lead preferences from extracted fields
+Executes workflow automation rules
+Pushes lead to external CRM asynchronously
+Response 200 OK
+{
+  "success": true,
+  "message": "Lead imported successfully."
+}
+Response 403 Forbidden
+{
+  "success": false,
+  "message": "You don't have authorization to access this resource"
+}
+Response 500 Error
+{
+  "success": false,
+  "message": "Server error details"
+}
+Error Responses
+All endpoints return consistent error shapes:
+
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": {
+    "email": ["The email must be a valid email address."]
+  }
+}
+HTTP Status	Meaning
+200	Success
+201	Created
+401	Unauthenticated — check your Bearer token
+403	Forbidden — insufficient permissions
+404	Lead not found
+422	Validation error
+500	Server error
+Quick Reference
+Action	Method	Endpoint
+List leads	GET	/api/leads
+Create lead	POST	/api/leads
+Get lead	GET	/api/leads/{uuid}
+Update lead	PUT	/api/leads/{uuid}
+Update specific columns	POST	/api/leads/update-columns/{uuid}
+Add note	POST	/api/create-lead-note
+Get notes	GET	/api/get-lead-notes?uuid={uuid}
+Get languages	GET	/api/ajax/languages
+Get lead statuses	GET	/api/ajax/get-statuses?model=App\\Models\\Lead
+Get lead sources	GET	/api/ajax/get-sources?model=App\\Models\\Lead
+Get lead mediums	GET	/api/ajax/get-mediums?model=App\\Models\\Lead
+Get lead types	GET	/api/ajax/get-types?model=App\\Models\\Lead
+Import lead (webhook)	POST	/api/webhook/lead-import-webhook

@@ -1,0 +1,848 @@
+Botspace Public API
+ 1.0 
+OAS 3.0
+Botspace Public API v1
+
+Servers
+
+https://public-api.bot.space - Production
+Message
+
+
+POST
+/v1/{channelId}/message/send-message
+
+Send a template message
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "John Doe",
+  "phone": "+919876543210",
+  "templateId": "payment_reminder",
+  "variables": [
+    "EMI",
+    "1000",
+    "2021-01-01"
+  ],
+  "mediaVariable": "https://example.com/image.png",
+  "cards": [
+    {
+      "variables": [
+        "EMI",
+        "1000",
+        "2021-01-01"
+      ],
+      "mediaVariable": "https://example.com/image.png"
+    }
+  ],
+  "fileName": "asdf.pdf"
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "id": "5f64256823133d00d13d7b19",
+    "conversationId": "5f64256823133d00d13d7b19",
+    "status": "accepted"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/message/send-session-message
+
+Send a session message (text only)
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "John Doe",
+  "phone": "+919876543210",
+  "text": "Hello!"
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "id": "5f64256823133d00d13d7b19",
+    "conversationId": "5f64256823133d00d13d7b19",
+    "status": "accepted"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/message/send-session-media-message
+
+Send a session message (media only)
+
+Parameters
+Cancel
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+Request body
+
+application/json
+{
+  "name": "John Doe",
+  "phone": "+919876543210",
+  "mediaUrl": "https://example.com/image.jpeg",
+  "mediaType": "image",
+  "label": "Hello!"
+}
+Execute
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "id": "5f64256823133d00d13d7b19",
+    "conversationId": "5f64256823133d00d13d7b19",
+    "status": "accepted"
+  }
+}
+No links
+
+GET
+/v1/{channelId}/message/{messageId}
+
+Get a message by ID
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+messageId *
+string
+(path)
+ID of the message
+
+5f64256823133d00d13d7b19
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "_id": "660fff39f4193a8529e75b7c",
+    "channelId": "637b6a864aae07f7bb26f7e2",
+    "workspaceId": "6378c52a569ab50016933520",
+    "createdOn": "2026-03-19T21:59:17.933Z",
+    "direction": "INCOMING",
+    "type": "message",
+    "source": "Dashboard",
+    "payload": {
+      "direction": "outgoing",
+      "type": "text",
+      "payload": {
+        "text": "asdf"
+      },
+      "raw": {
+        "channel": "whatsapp",
+        "source": "91xxxxxxxxxx",
+        "destination": "91xxxxxxxxxx",
+        "msg": {
+          "type": "text",
+          "text": "asdf"
+        },
+        "senderName": "Connplex"
+      },
+      "response": {
+        "status": "submitted",
+        "messageId": "7e690997-f95b-4308-ab07-856635e06500"
+      }
+    },
+    "delivered": true,
+    "read": false,
+    "sent": true,
+    "replied": false,
+    "failed": false,
+    "failedReason": ""
+  }
+}
+No links
+
+GET
+/v1/{channelId}/message/{messageId}/delivery-status
+
+Get a message status
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+messageId *
+string
+(path)
+ID of the message
+
+5f64256823133d00d13d7b19
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "messageId": "5f64256823133d00d13d7b19",
+    "status": "READ",
+    "failedReason": "User does not have a valid whatsapp number"
+  }
+}
+No links
+Conversation
+
+
+GET
+/v1/{channelId}/conversation
+
+Get contact using Country Code and Phone Number
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+countryCode *
+string
+(query)
+Country Code of the Contact
+
+91
+phone *
+string
+(query)
+Phone Number of the Contact
+
+9876543210
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "id": "5f64256823133d00d13d7b19",
+    "name": "Anmol",
+    "countryCode": "91",
+    "phone": "9028562766",
+    "fullPhoneNumber": "+919028562766",
+    "conversationStatus": "OPEN or CLOSED",
+    "assignmentType": "UNASSIGNED",
+    "assignedTo": "string",
+    "createdAt": "2026-03-19T21:59:17.959Z"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/conversation
+
+Create a new Conversation
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "Anmol",
+  "phone": "+919028562766"
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "conversationId": "5f64256823133d00d13d7b19",
+    "name": "Anmol",
+    "countryCode": "91",
+    "phone": "9028562766",
+    "fullPhoneNumber": "+919028562766",
+    "createdAt": "2026-03-19T21:59:17.968Z"
+  }
+}
+No links
+
+GET
+/v1/{channelId}/conversation/{conversationId}
+
+Get contact using Conversation Id
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+conversationId *
+string
+(path)
+ID of the Conversation
+
+64b5279e1a1f31ea1fe33121
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "name": "Anmol",
+    "countryCode": "91",
+    "phone": "9028562766",
+    "fullPhoneNumber": "+919028562766",
+    "conversationStatus": "OPEN or CLOSED",
+    "assignmentType": "UNASSIGNED",
+    "assignedTo": "string",
+    "createdAt": "2026-03-19T21:59:17.976Z"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/conversation/{conversationId}/assign/{email}
+
+Assign a Workspace Memeber to a Conversation
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+conversationId *
+string
+(path)
+ID of the Conversation
+
+64b5279e1a1f31ea1fe33121
+email *
+string
+(path)
+Email of workspace member
+
+anmol@bot.space
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "name": "Anmol",
+    "countryCode": "91",
+    "phone": "9028562766",
+    "fullPhoneNumber": "+919028562766",
+    "createdAt": "2026-03-19T21:59:17.986Z",
+    "conversationStatus": "OPEN or CLOSE",
+    "assignmentType": "MEMBER",
+    "assignedTo": "string"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/conversation/{conversationId}/mark-closed
+
+Mark a Conversation with Conversation as closed
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+conversationId *
+string
+(path)
+ID of the Conversation
+
+64b5279e1a1f31ea1fe33121
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "name": "Anmol",
+    "countryCode": "91",
+    "phone": "9028562766",
+    "fullPhoneNumber": "+919028562766",
+    "conversationStatus": "OPEN or CLOSED",
+    "assignmentType": "UNASSIGNED",
+    "assignedTo": "string",
+    "createdAt": "2026-03-19T21:59:17.995Z",
+    "assignment": "done"
+  }
+}
+No links
+
+POST
+/v1/{channelId}/conversation/{conversationId}/labels
+
+Add labels to a Conversation
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+conversationId *
+string
+(path)
+ID of the Conversation
+
+64b5279e1a1f31ea1fe33121
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "labels": [
+    "VIP",
+    "High Priority"
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "success": true
+  }
+}
+No links
+
+DELETE
+/v1/{channelId}/conversation/{conversationId}/labels/{label}
+
+Remove label from a Conversation
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+channelId *
+string
+(path)
+Channel Id assocaited with a Phone Number
+
+channelId
+conversationId *
+string
+(path)
+ID of the Conversation
+
+64b5279e1a1f31ea1fe33121
+label *
+string
+(path)
+Label to remove
+
+VIP
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "success": true
+  }
+}
+No links
+Contact
+
+
+POST
+/v1/contact
+
+Create a new Contact
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "Rohit",
+  "phone": "+919028562766",
+  "email": "rohit@bot.space",
+  "labels": [
+    "VIP",
+    "High Priority"
+  ],
+  "contactProperties": {
+    "age": 25
+  }
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "contactId": "5f64256823133d00d13d7b19",
+    "name": "Rohit",
+    "phone": {
+      "countryCode": "91",
+      "phone": "9028562766"
+    },
+    "email": "rohit@bot.space",
+    "labels": [
+      "VIP",
+      "High Priority"
+    ],
+    "contactProperties": {
+      "customProperty1": "value1",
+      "customProperty2": "value2"
+    },
+    "createdAt": "2026-03-19T21:59:18.022Z"
+  }
+}
+No links
+
+PATCH
+/v1/contact/properties
+
+Update Contact Properties of a Contact
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "contactId": "64b5279e1a1f31ea1fe33121",
+  "contactProperties": {
+    "age": 25
+  }
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "success": true
+  }
+}
+No links
+
+POST
+/v1/contact/{contactId}/labels
+
+Add Labels to a Contact
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+contactId *
+string
+(path)
+ID of the Contact
+
+64b5279e1a1f31ea1fe33121
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "labels": [
+    "VIP",
+    "High Priority"
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "success": true
+  }
+}
+No links
+
+DELETE
+/v1/contact/{contactId}/labels/{label}
+
+Remove a Label from a Contact
+
+Parameters
+Try it out
+Name	Description
+apiKey
+string
+(query)
+API Key obtained from Dashboard
+
+apiKey
+contactId *
+string
+(path)
+ID of the Contact
+
+64b5279e1a1f31ea1fe33121
+label *
+string
+(path)
+Label to remove
+
+VIP
+Responses
+Code	Description	Links
+200	
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": {
+    "success": true
+  }
+}
+No links
